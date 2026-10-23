@@ -25,6 +25,8 @@ export const metadata: Metadata = {
   ],
 };
 
+import { Suspense } from "react";
+
 export default function RootLayout({
   children,
 }: {
@@ -39,7 +41,9 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-surface text-on-surface">
-        <Navbar />
+        <Suspense fallback={<header className="h-16 border-b border-border-subtle bg-pure-white" />}>
+          <Navbar />
+        </Suspense>
         <div className="flex-1 flex flex-col">{children}</div>
         <Footer />
       </body>

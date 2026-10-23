@@ -120,7 +120,7 @@ export function Footer() {
 
         {/* Bottom bar */}
         <div className="pt-8 border-t border-border-subtle flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-on-surface-variant">
-          <p>© {new Date().getFullYear()} PGConnect NCR. All rights reserved.</p>
+          <p>© 2026 PGConnect NCR. All rights reserved.</p>
           <div className="flex items-center gap-6">
             <Link href="/privacy" className="hover:text-primary transition-colors">
               Privacy Policy

@@ -67,10 +67,14 @@ def create_app() -> FastAPI:
     # ---- Routes ----------------------------------------------
     app.include_router(api_router, prefix="/api/v1")
 
-    # ---- Health ----------------------------------------------
+    # ---- Root & Health ---------------------------------------
+    @app.get("/", tags=["system"])
+    async def root():
+        return {"app": "PGConnect API", "version": "0.1.0", "docs": "/docs"}
+
     @app.get("/health", tags=["system"])
     async def health():
-        return {"status": "ok", "service": "pgconnect-api"}
+        return {"status": "ok", "service": "pgconnect-api", "version": "0.1.0"}
 
     @app.get("/ready", tags=["system"])
     async def ready():

@@ -20,11 +20,17 @@ class Settings(BaseSettings):
 
     # ---- Application ----------------------------------------
     environment: Literal["development", "staging", "production"] = "development"
-    api_secret_key: str = Field(..., description="Random 256-bit secret for signing")
+    api_secret_key: str = Field(
+        default="dev-secret-key-change-in-production-only-1234567890",
+        description="Random 256-bit secret for signing",
+    )
     api_cors_origins: list[str] = ["http://localhost:3000"]
 
     # ---- Database -------------------------------------------
-    database_url: str = Field(..., description="asyncpg connection URL for app")
+    database_url: str = Field(
+        default="postgresql+asyncpg://postgres:postgres@localhost:5432/pgconnect",
+        description="asyncpg connection URL for app",
+    )
     database_url_direct: str | None = None  # For Alembic migrations
 
     # ---- Redis ----------------------------------------------
@@ -32,7 +38,10 @@ class Settings(BaseSettings):
 
     # ---- Supabase -------------------------------------------
     next_public_supabase_url: str = ""
-    supabase_jwt_secret: str = Field(..., description="JWT secret from Supabase dashboard")
+    supabase_jwt_secret: str = Field(
+        default="dev-supabase-jwt-secret-placeholder",
+        description="JWT secret from Supabase dashboard",
+    )
     supabase_service_role_key: str = ""
     supabase_storage_bucket_pg_media: str = "pg-media"
 

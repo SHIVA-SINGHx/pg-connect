@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { Suspense, use, useState } from "react";
 import Link from "next/link";
 import {
   MapPin,
@@ -22,6 +22,24 @@ import {
 } from "lucide-react";
 
 export default function PGDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-7xl mx-auto px-4 py-16 text-center text-xs text-on-surface-variant">
+          Loading PG details...
+        </div>
+      }
+    >
+      <PGDetailContent params={params} />
+    </Suspense>
+  );
+}
+
+function PGDetailContent({
   params,
 }: {
   params: Promise<{ id: string }>;
