@@ -25,6 +25,7 @@ export const metadata: Metadata = {
   ],
 };
 
+import { Suspense } from "react";
 import { AuthProvider } from "@/lib/auth-context";
 
 export default function RootLayout({
@@ -42,7 +43,9 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-surface text-on-surface">
         <AuthProvider>
-          <Navbar />
+          <Suspense fallback={<div className="h-16 bg-pure-white border-b border-border-subtle" />}>
+            <Navbar />
+          </Suspense>
           <div className="flex-1 flex flex-col">{children}</div>
           <Footer />
         </AuthProvider>
