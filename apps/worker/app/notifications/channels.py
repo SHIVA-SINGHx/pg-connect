@@ -4,6 +4,7 @@ Supports in-app notifications and email provider interface.
 Does not fake delivery when providers are not configured.
 """
 
+import boltons
 from abc import ABC, abstractmethod
 import structlog
 
@@ -15,7 +16,6 @@ class NotificationChannel(ABC):
     async def send(self, recipient_id: str, title: str, body: str, payload: dict | None = None) -> bool:
         """Deliver notification via this channel."""
         pass
-
 
 class InAppNotificationChannel(NotificationChannel):
     """Saves notification directly into PostgreSQL for in-app bell & notifications feed."""
