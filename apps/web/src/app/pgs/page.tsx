@@ -14,6 +14,7 @@ import {
   Map as MapIcon,
   LayoutGrid,
   Check,
+  Heart,
 } from "lucide-react";
 
 interface PGItem {
@@ -124,6 +125,56 @@ export default function PGsPage() {
   const [maxBudget, setMaxBudget] = useState<number>(20000);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
+  const [savedIds, setSavedIds] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("pgconnect_saved_pgs");
+        if (stored) {
+          const list = JSON.parse(stored);
+          return list.map((p: { id: string }) => p.id);
+        }
+      } catch {
+        // fallback
+      }
+    }
+    return ["pg-cyber-hub-1", "pg-udyog-vihar-1"];
+  });
+
+  const toggleSavePG = (pg: PGItem, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const isSaved = savedIds.includes(pg.id);
+    const nextSavedIds = isSaved ? savedIds.filter((id) => id !== pg.id) : [...savedIds, pg.id];
+    setSavedIds(nextSavedIds);
+
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("pgconnect_saved_pgs");
+        let list = stored ? JSON.parse(stored) : [];
+        if (!isSaved) {
+          if (!list.some((p: { id: string }) => p.id === pg.id)) {
+            list.push({
+              id: pg.id,
+              name: pg.name,
+              area: pg.area,
+              price: pg.price,
+              gender: pg.gender,
+              sharing: pg.sharing,
+              rating: pg.rating,
+              image: pg.image,
+              distanceToMetro: pg.distanceToMetro,
+              phone: "+91 98112 23344",
+            });
+          }
+        } else {
+          list = list.filter((p: { id: string }) => p.id !== pg.id);
+        }
+        localStorage.setItem("pgconnect_saved_pgs", JSON.stringify(list));
+      } catch {
+        // fallback
+      }
+    }
+  };
 
   const filteredPGs = ALL_PGS.filter((pg) => {
     if (selectedArea !== "All" && !pg.area.toLowerCase().includes(selectedArea.toLowerCase())) {

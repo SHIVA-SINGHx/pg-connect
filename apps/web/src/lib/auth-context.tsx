@@ -45,25 +45,34 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(defaultDemoUser);
-  const [token, setToken] = useState<string | null>("dev-roommate-aarav");
+  const [user, setUser] = useState<AuthUser | null>(() => {
+    if (typeof window !== "undefined") {
+      const savedDemo = localStorage.getItem("pgconnect_auth_user");
+      if (savedDemo) {
+        try {
+          return JSON.parse(savedDemo);
+        } catch {
+          // fallback
+        }
+      }
+    }
+    return defaultDemoUser;
+  });
+
+  const [token, setToken] = useState<string | null>(() => {
+    if (typeof window !== "undefined") {
+      const savedToken = localStorage.getItem("pgconnect_auth_token");
+      if (savedToken) return savedToken;
+    }
+    return "dev-roommate-aarav";
+  });
+
   const [isLoading, setIsLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(3);
 
   useEffect(() => {
-    // Check saved demo user or Supabase session from localStorage
-    const savedDemo = localStorage.getItem("pgconnect_auth_user");
-    const savedToken = localStorage.getItem("pgconnect_auth_token");
-    if (savedDemo && savedToken) {
-      try {
-        setUser(JSON.parse(savedDemo));
-        setToken(savedToken);
-      } catch (e) {
-        // use default
-      }
-    }
-
     if (isSupabaseConfigured) {
+      setIsLoading(true);
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session) {
           const u = session.user;
@@ -77,6 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(authUser);
           setToken(session.access_token);
         }
+        setIsLoading(false);
       });
 
       const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {

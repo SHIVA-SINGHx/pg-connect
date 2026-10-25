@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@pgconnect/api-client": ["../../packages/api-client/src/index.ts"]
     }
   },
   "include": [

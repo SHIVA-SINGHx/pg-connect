@@ -27,9 +27,55 @@ export default function PGDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("pgconnect_saved_pgs");
+        if (stored) {
+          const list = JSON.parse(stored);
+          return list.some((p: { id: string }) => p.id === (id || "pg-cyber-hub-1"));
+        }
+      } catch {
+        // fallback
+      }
+    }
+    return false;
+  });
   const [visitBooked, setVisitBooked] = useState(false);
   const [selectedSharing, setSelectedSharing] = useState<"twin" | "single" | "triple">("twin");
+
+  const toggleSave = () => {
+    const nextSaved = !saved;
+    setSaved(nextSaved);
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("pgconnect_saved_pgs");
+        let list = stored ? JSON.parse(stored) : [];
+        const currentId = id || "pg-cyber-hub-1";
+        if (nextSaved) {
+          if (!list.some((p: { id: string }) => p.id === currentId)) {
+            list.push({
+              id: currentId,
+              name: pg.name,
+              area: pg.area,
+              price: pg.pricing[selectedSharing].rent,
+              gender: pg.gender,
+              sharing: ["Twin", "Single"],
+              rating: pg.rating,
+              image: pg.images[0],
+              distanceToMetro: pg.metroDistance,
+              phone: "+91 98112 23344",
+            });
+          }
+        } else {
+          list = list.filter((p: { id: string }) => p.id !== currentId);
+        }
+        localStorage.setItem("pgconnect_saved_pgs", JSON.stringify(list));
+      } catch {
+        // fallback
+      }
+    }
+  };
 
   // PG Details
   const pg = {
@@ -79,7 +125,7 @@ export default function PGDetailPage({
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setSaved(!saved)}
+            onClick={toggleSave}
             className={`p-2 rounded-xl border border-border-subtle hover:bg-surface-muted transition-colors ${
               saved ? "text-accent-rose" : "text-on-surface-variant"
             }`}
