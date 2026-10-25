@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { useAuth } from "@/lib/auth-context";
 import { X, ShieldCheck, UserCheck, Home } from "lucide-react";
 

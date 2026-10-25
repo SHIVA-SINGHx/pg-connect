@@ -1,7 +1,8 @@
 "use client";
 
-import { use, useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import {
   MapPin,
   ShieldCheck,
@@ -12,21 +13,14 @@ import {
   Wind,
   Phone,
   Calendar,
-  Clock,
   CheckCircle,
-  Share2,
   Heart,
   ChevronLeft,
-  Building2,
-  ArrowRight,
 } from "lucide-react";
 
-export default function PGDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = use(params);
+function PGDetailContent() {
+  const routeParams = useParams();
+  const id = (routeParams?.id as string) || "pg-cyber-hub-1";
   const [saved, setSaved] = useState(() => {
     if (typeof window !== "undefined") {
       try {
@@ -316,5 +310,20 @@ export default function PGDetailPage({
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PGDetailPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-7xl mx-auto px-4 py-20 text-center flex flex-col items-center justify-center">
+          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+          <p className="text-xs text-on-surface-variant font-medium">Loading PG details...</p>
+        </div>
+      }
+    >
+      <PGDetailContent />
+    </Suspense>
   );
 }

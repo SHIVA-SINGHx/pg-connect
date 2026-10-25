@@ -1,13 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import {
-  User,
   MapPin,
   ShieldCheck,
-  Building2,
-  Users,
   Check,
 } from "lucide-react";
 
