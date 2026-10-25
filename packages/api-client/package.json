@@ -1,0 +1,14 @@
+{
+  "name": "@pgconnect/api-client",
+  "version": "0.1.0",
+  "description": "Shared TypeScript API client library for PGConnect",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
