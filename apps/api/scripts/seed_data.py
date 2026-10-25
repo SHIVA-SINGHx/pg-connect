@@ -9,7 +9,7 @@ import uuid
 from datetime import date
 
 from sqlalchemy import select
-from app.db.session import AsyncSessionLocal
+from app.db.session import get_session_factory
 from app.models.listing import (
     Amenity,
     AvailabilityStatus,
@@ -144,7 +144,7 @@ SAMPLE_LISTINGS = [
         "description": "Premium co-living space minutes away from Cyber Hub and Rapid Metro. Fully furnished with high-speed fiber, daily meals, laundry, and round-the-clock security.",
         "room_types": [
             {"sharing_type": RoomSharingType.SINGLE, "price_per_month": 26000, "total_beds": 10, "available_beds": 2},
-            {"sharing_type": RoomSharingType.DOUBLE, "price_per_month": 16500, "total_beds": 24, "available_beds": 5},
+            {"sharing_type": RoomSharingType.TWIN, "price_per_month": 16500, "total_beds": 24, "available_beds": 5},
         ],
         "media": [
             "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80",
@@ -165,7 +165,7 @@ SAMPLE_LISTINGS = [
         "house_rules": "No loud music post 11 PM. Strictly non-smoking premises.",
         "description": "Designed for tech professionals working in Udyog Vihar Phase 1-5. Includes chef-prepared meals, ergonomic work desks, high-speed WiFi, and gym access.",
         "room_types": [
-            {"sharing_type": RoomSharingType.DOUBLE, "price_per_month": 13000, "total_beds": 30, "available_beds": 8},
+            {"sharing_type": RoomSharingType.TWIN, "price_per_month": 13000, "total_beds": 30, "available_beds": 8},
             {"sharing_type": RoomSharingType.SINGLE, "price_per_month": 21000, "total_beds": 12, "available_beds": 1},
         ],
         "media": [
@@ -188,7 +188,7 @@ SAMPLE_LISTINGS = [
         "description": "Pocket-friendly, peaceful residency ideal for NCU students and interns. Walking distance to local markets, bus stops, and Sector 22 market.",
         "room_types": [
             {"sharing_type": RoomSharingType.TRIPLE, "price_per_month": 8500, "total_beds": 18, "available_beds": 4},
-            {"sharing_type": RoomSharingType.DOUBLE, "price_per_month": 11500, "total_beds": 20, "available_beds": 3},
+            {"sharing_type": RoomSharingType.TWIN, "price_per_month": 11500, "total_beds": 20, "available_beds": 3},
             {"sharing_type": RoomSharingType.SINGLE, "price_per_month": 14500, "total_beds": 6, "available_beds": 2},
         ],
         "media": [
@@ -199,8 +199,9 @@ SAMPLE_LISTINGS = [
 
 
 async def seed():
-    print("🌱 Starting database seeding for PGConnect Gurgaon market...")
-    async with AsyncSessionLocal() as db:
+    print("Starting database seeding for PGConnect Gurgaon market...")
+    session_factory = get_session_factory()
+    async with session_factory() as db:
         amenity_objs = {}
         for a_data in SAMPLE_AMENITIES:
             stmt = select(Amenity).where(Amenity.slug == a_data["slug"])
@@ -281,7 +282,7 @@ async def seed():
                     db.add(link)
 
         await db.commit()
-        print("🎉 Database seeding completed successfully!")
+        print("SUCCESS: Database seeding completed successfully!")
 
 
 if __name__ == "__main__":

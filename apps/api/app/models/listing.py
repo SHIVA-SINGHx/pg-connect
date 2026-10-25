@@ -108,9 +108,9 @@ class PGMedia(Base):
 
 class RoomSharingType(str, enum.Enum):
     SINGLE = "SINGLE"
-    DOUBLE = "DOUBLE"
+    TWIN = "TWIN"
     TRIPLE = "TRIPLE"
-    QUAD = "QUAD"
+    FOUR_PLUS = "FOUR_PLUS"
 
 
 class RoomType(Base):

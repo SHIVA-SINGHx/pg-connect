@@ -6,7 +6,7 @@ Reads from environment variables. Never hardcode credentials here.
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -25,6 +25,21 @@ class Settings(BaseSettings):
         description="Random 256-bit secret for signing",
     )
     api_cors_origins: list[str] = ["http://localhost:3000"]
+
+    @field_validator("api_cors_origins", mode="before")
+    @classmethod
+    def assemble_cors_origins(cls, v: object) -> list[str]:
+        if isinstance(v, str):
+            if v.startswith("[") and v.endswith("]"):
+                import json
+                try:
+                    return json.loads(v)
+                except Exception:
+                    pass
+            return [i.strip() for i in v.split(",") if i.strip()]
+        elif isinstance(v, list):
+            return [str(i) for i in v]
+        return ["http://localhost:3000"]
 
     # ---- Database -------------------------------------------
     database_url: str = Field(
