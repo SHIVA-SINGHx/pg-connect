@@ -283,19 +283,21 @@ export default function ListYourPGPage() {
             <h3 className="text-base font-black text-on-surface">Amenities &amp; Contact Verification</h3>
 
             <div className="grid grid-cols-2 gap-3">
-              {[
-                { label: "Daily Meals (3 times)", key: "mealsIncluded" },
-                { label: "High-Speed WiFi", key: "hasWifi" },
-                { label: "100% Power Backup", key: "hasPowerBackup" },
-                { label: "Split Air Conditioning", key: "hasAC" },
-              ].map((item) => (
+              {(
+                [
+                  { label: "Daily Meals (3 times)", key: "mealsIncluded" },
+                  { label: "High-Speed WiFi", key: "hasWifi" },
+                  { label: "100% Power Backup", key: "hasPowerBackup" },
+                  { label: "Split Air Conditioning", key: "hasAC" },
+                ] as const
+              ).map((item) => (
                 <label
                   key={item.key}
                   className="flex items-center gap-2 p-3 bg-surface-subtle rounded-xl border border-border-subtle cursor-pointer hover:bg-surface-muted transition-colors"
                 >
                   <input
                     type="checkbox"
-                    checked={(formData as any)[item.key]}
+                    checked={Boolean(formData[item.key])}
                     onChange={(e) => setFormData({ ...formData, [item.key]: e.target.checked })}
                     className="w-4 h-4 accent-primary"
                   />

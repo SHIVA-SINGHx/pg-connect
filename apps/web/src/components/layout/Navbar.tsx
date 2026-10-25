@@ -15,7 +15,6 @@ import {
   Bell,
   LayoutDashboard,
   ShieldCheck,
-  User as UserIcon,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { AuthModal } from "@/components/auth/AuthModal";

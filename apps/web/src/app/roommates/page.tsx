@@ -8,14 +8,8 @@ import {
   MapPin,
   Sparkles,
   CheckCircle,
-  Filter,
-  UserCheck,
-  Clock,
-  Briefcase,
-  Utensils,
-  Moon,
-  Sun,
   Heart,
+  MessageSquare,
 } from "lucide-react";
 
 interface RoommateCandidate {
@@ -128,9 +122,61 @@ export default function RoommatesPage() {
   const [selectedArea, setSelectedArea] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [connectedIds, setConnectedIds] = useState<Record<string, boolean>>({});
+  const [savedRoommateIds, setSavedRoommateIds] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("pgconnect_saved_roommates");
+        if (stored) {
+          const list = JSON.parse(stored);
+          return list.map((r: { id: string }) => r.id);
+        }
+      } catch {
+        // fallback
+      }
+    }
+    return ["rm-1", "rm-2"];
+  });
 
   const toggleConnect = (id: string) => {
     setConnectedIds((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const toggleSaveRoommate = (r: RoommateCandidate, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const isSaved = savedRoommateIds.includes(r.id);
+    const nextSavedIds = isSaved
+      ? savedRoommateIds.filter((id) => id !== r.id)
+      : [...savedRoommateIds, r.id];
+    setSavedRoommateIds(nextSavedIds);
+
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("pgconnect_saved_roommates");
+        let list = stored ? JSON.parse(stored) : [];
+        if (!isSaved) {
+          if (!list.some((item: { id: string }) => item.id === r.id)) {
+            list.push({
+              id: r.id,
+              name: r.name,
+              age: r.age,
+              gender: r.gender,
+              occupation: r.profession,
+              company: r.company,
+              budget: r.budgetMax,
+              preferredAreas: [r.targetArea],
+              lifestyle: [r.diet, r.sleepSchedule.split(" ")[0], r.smoking],
+              image: r.avatar,
+            });
+          }
+        } else {
+          list = list.filter((item: { id: string }) => item.id !== r.id);
+        }
+        localStorage.setItem("pgconnect_saved_roommates", JSON.stringify(list));
+      } catch {
+        // fallback
+      }
+    }
   };
 
   const filteredRoommates = ROOMMATES.filter((r) => {
@@ -265,9 +311,21 @@ export default function RoommatesPage() {
                     <h3 className="font-bold text-lg text-on-surface">
                       {r.name}, <span className="text-sm font-medium text-on-surface-variant">{r.age}</span>
                     </h3>
-                    <span className="text-xs font-bold text-secondary bg-secondary-fixed/50 px-2 py-0.5 rounded-full">
-                      {r.gender}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-secondary bg-secondary-fixed/50 px-2 py-0.5 rounded-full">
+                        {r.gender}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => toggleSaveRoommate(r, e)}
+                        title={savedRoommateIds.includes(r.id) ? "Remove from saved" : "Save roommate"}
+                        className={`p-1.5 rounded-full hover:bg-surface-muted transition-colors ${
+                          savedRoommateIds.includes(r.id) ? "text-accent-rose" : "text-slate-400 hover:text-accent-rose"
+                        }`}
+                      >
+                        <Heart className={`w-4 h-4 ${savedRoommateIds.includes(r.id) ? "fill-accent-rose text-accent-rose" : ""}`} />
+                      </button>
+                    </div>
                   </div>
 
                   <p className="text-xs font-semibold text-primary mt-0.5">
@@ -349,6 +407,15 @@ export default function RoommatesPage() {
                       </>
                     )}
                   </button>
+                  {isConnected && (
+                    <Link
+                      href="/messages"
+                      className="px-3 py-2 rounded-xl bg-primary hover:bg-primary-container text-on-primary text-xs font-bold transition-all flex items-center gap-1 shadow-xs"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      <span>Chat</span>
+                    </Link>
+                  )}
                 </div>
               </div>
             </div>

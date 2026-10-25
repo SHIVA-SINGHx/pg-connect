@@ -8,12 +8,6 @@ import {
   ShieldCheck,
   Building2,
   Users,
-  Settings,
-  Heart,
-  Edit3,
-  Moon,
-  Utensils,
-  Briefcase,
   Check,
 } from "lucide-react";
 

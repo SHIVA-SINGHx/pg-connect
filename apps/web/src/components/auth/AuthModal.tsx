@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { X, ShieldCheck, UserCheck, Home, KeyRound } from "lucide-react";
+import { X, ShieldCheck, UserCheck, Home } from "lucide-react";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -11,8 +11,6 @@ interface AuthModalProps {
 
 export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const { loginAsDemo, user, logout } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
 
   if (!isOpen) return null;
 

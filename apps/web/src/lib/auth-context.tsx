@@ -67,12 +67,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return "dev-roommate-aarav";
   });
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(isSupabaseConfigured);
   const [unreadCount, setUnreadCount] = useState(3);
 
   useEffect(() => {
     if (isSupabaseConfigured) {
-      setIsLoading(true);
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session) {
           const u = session.user;

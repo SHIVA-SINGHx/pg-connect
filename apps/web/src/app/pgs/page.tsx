@@ -341,6 +341,16 @@ export default function PGsPage() {
                     {pg.gender}
                   </span>
                 </div>
+                <button
+                  type="button"
+                  onClick={(e) => toggleSavePG(pg, e)}
+                  title={savedIds.includes(pg.id) ? "Remove from saved" : "Save property"}
+                  className={`absolute top-3 right-3 w-8 h-8 rounded-full bg-pure-white/90 backdrop-blur-xs flex items-center justify-center shadow-xs transition-colors hover:bg-pure-white ${
+                    savedIds.includes(pg.id) ? "text-accent-rose" : "text-slate-500 hover:text-accent-rose"
+                  }`}
+                >
+                  <Heart className={`w-4 h-4 ${savedIds.includes(pg.id) ? "fill-accent-rose text-accent-rose" : ""}`} />
+                </button>
                 <div className="absolute bottom-3 right-3 px-2 py-0.5 rounded-md bg-pure-white/95 text-xs font-bold text-on-surface shadow-xs flex items-center gap-1">
                   <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
                   <span>{pg.rating}</span>

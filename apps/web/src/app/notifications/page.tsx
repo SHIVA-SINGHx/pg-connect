@@ -128,14 +128,16 @@ export default function NotificationsPage() {
 
       {/* Filter Tabs */}
       <div className="flex gap-2 my-6">
-        {[
-          { key: "all", label: "All" },
-          { key: "unread", label: "Unread" },
-          { key: "requests", label: "Connection Requests" },
-        ].map((tab) => (
+        {(
+          [
+            { key: "all", label: "All" },
+            { key: "unread", label: "Unread" },
+            { key: "requests", label: "Connection Requests" },
+          ] as const
+        ).map((tab) => (
           <button
             key={tab.key}
-            onClick={() => setFilter(tab.key as any)}
+            onClick={() => setFilter(tab.key)}
             className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
               filter === tab.key
                 ? "bg-primary text-on-primary shadow-xs"

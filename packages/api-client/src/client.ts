@@ -30,6 +30,7 @@ import type {
 export interface ClientConfig {
   baseUrl?: string;
   getToken?: () => string | null | Promise<string | null>;
+
 }
 
 export class APIError extends Error {
