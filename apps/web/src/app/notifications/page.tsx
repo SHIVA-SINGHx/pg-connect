@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import {
   Bell,
@@ -13,6 +13,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
+import { api } from "@/lib/api";
 
 interface NotificationItem {
   id: string;
@@ -73,16 +74,56 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
   const [filter, setFilter] = useState<"all" | "unread" | "requests">("all");
 
-  const markAllRead = () => {
+  useEffect(() => {
+    let isMounted = true;
+    async function loadNotifications() {
+      try {
+        const liveNotifs = await api.notifications.list();
+        if (isMounted && liveNotifs && liveNotifs.length > 0) {
+          const mapped: NotificationItem[] = liveNotifs.map((n) => ({
+            id: n.id,
+            type: (n.type as NotificationItem["type"]) || "NEW_MESSAGE",
+            title: n.title,
+            body: n.body,
+            created_at: new Date(n.created_at).toLocaleDateString([], { month: "short", day: "numeric" }),
+            read: Boolean(n.read_at),
+            action_href: n.type === "CONNECTION_REQUEST" ? "/roommates" : "/messages",
+            action_label: n.type === "CONNECTION_REQUEST" ? "View Connection" : "Open",
+          }));
+          setNotifications(mapped);
+          const unread = mapped.filter((n) => !n.read).length;
+          setUnreadCount(unread);
+        }
+      } catch {
+        // Use demo notifications when offline
+      }
+    }
+    loadNotifications();
+    return () => { isMounted = false; };
+  }, [setUnreadCount]);
+
+  const markAllRead = async () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     setUnreadCount(0);
+    try {
+      await api.notifications.markAllRead();
+    } catch {
+      // Local state already updated
+    }
   };
 
-  const markSingleRead = (id: string) => {
+  const markSingleRead = async (id: string) => {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
     setUnreadCount((c) => Math.max(0, c - 1));
+    if (!id.startsWith("notif-")) {
+      try {
+        await api.notifications.markRead(id);
+      } catch {
+        // Local state already updated
+      }
+    }
   };
 
   const filtered = notifications.filter((n) => {

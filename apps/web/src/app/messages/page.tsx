@@ -194,13 +194,15 @@ export default function MessagesPage() {
               <input
                 type="text"
                 placeholder="Search conversations..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-3 py-2 rounded-xl bg-pure-white border border-border-subtle text-xs font-medium text-on-surface placeholder:text-outline focus:outline-none focus:border-primary"
               />
             </div>
           </div>
 
           <div className="flex-1 overflow-y-auto divide-y divide-border-subtle/60">
-            {CONVERSATIONS.map((c) => {
+            {filteredConversations.map((c) => {
               const isActive = c.id === activeConvId;
               return (
                 <button
