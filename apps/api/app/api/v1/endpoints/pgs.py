@@ -98,6 +98,7 @@ async def update_pg(
 
 
 @router.post("/{listing_id}/save")
+@router.delete("/{listing_id}/save")
 async def toggle_save_pg(
     listing_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
@@ -106,7 +107,7 @@ async def toggle_save_pg(
     """Toggle bookmark/saved state for a PG."""
     service = PGService(db)
     is_saved = await service.save_pg(current_user, listing_id)
-    return {"saved": is_saved, "listing_id": str(listing_id)}
+    return {"saved": is_saved, "listing_id": str(listing_id), "message": "Saved state updated"}
 
 
 @router.post("/{listing_id}/interest", response_model=InterestRead)

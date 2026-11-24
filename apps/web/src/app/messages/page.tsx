@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   MessageSquare,
@@ -12,6 +12,8 @@ import {
   ShieldCheck,
   ChevronLeft,
 } from "lucide-react";
+import { api } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 
 interface Conversation {
   id: string;
@@ -31,7 +33,7 @@ interface Message {
   time: string;
 }
 
-const CONVERSATIONS: Conversation[] = [
+const DEFAULT_CONVERSATIONS: Conversation[] = [
   {
     id: "conv-1",
     name: "Aman Sharma",
@@ -65,8 +67,11 @@ const CONVERSATIONS: Conversation[] = [
 ];
 
 export default function MessagesPage() {
+  const { user } = useAuth();
+  const [conversations, setConversations] = useState<Conversation[]>(DEFAULT_CONVERSATIONS);
   const [activeConvId, setActiveConvId] = useState<string>("conv-1");
   const [inputText, setInputText] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [messages, setMessages] = useState<Record<string, Message[]>>({
     "conv-1": [
       { id: "m1", sender: "them", text: "Hey! Noticed your profile — we have a 95% match for Cyber City.", time: "10:35 AM" },
@@ -82,22 +87,95 @@ export default function MessagesPage() {
     ],
   });
 
-  const activeConv = CONVERSATIONS.find((c) => c.id === activeConvId) || CONVERSATIONS[0];
+  useEffect(() => {
+    let isMounted = true;
+    async function loadConversations() {
+      try {
+        const liveConvs = await api.messages.getConversations();
+        if (isMounted && liveConvs && liveConvs.length > 0) {
+          const mapped: Conversation[] = liveConvs.map((c) => ({
+            id: c.id,
+            name: c.listing_id ? "PG Property Inquiry" : "Roommate Chat",
+            type: c.listing_id ? "owner" : "roommate",
+            subtitle: c.listing_id ? "Property Inquiry Thread" : "Connected Roommate",
+            avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+            lastMessage: "Click to start chatting",
+            time: "Recently",
+            unreadCount: 0,
+          }));
+          setConversations(mapped);
+          setActiveConvId(mapped[0].id);
+        }
+      } catch {
+        // Fallback to default conversations when offline or mock mode
+      }
+    }
+    loadConversations();
+    return () => { isMounted = false; };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadThreadMessages() {
+      if (!activeConvId || activeConvId.startsWith("conv-")) return;
+      try {
+        const msgs = await api.messages.getMessages(activeConvId);
+        if (isMounted && msgs) {
+          const formatted: Message[] = msgs.map((m) => ({
+            id: m.id,
+            sender: m.sender_id === user?.id ? "me" : "them",
+            text: m.body,
+            time: new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          }));
+          setMessages((prev) => ({
+            ...prev,
+            [activeConvId]: formatted,
+          }));
+        }
+      } catch {
+        // Keep existing or demo messages
+      }
+    }
+    loadThreadMessages();
+    return () => { isMounted = false; };
+  }, [activeConvId, user?.id]);
+
+  const activeConv = conversations.find((c) => c.id === activeConvId) || conversations[0] || DEFAULT_CONVERSATIONS[0];
   const activeMessages = messages[activeConvId] || [];
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputText.trim()) return;
 
+    const textToSend = inputText.trim();
     const newMsg: Message = {
       id: Date.now().toString(),
       sender: "me",
-      text: inputText.trim(),
+      text: textToSend,
       time: "Just now",
     };
 
     setMessages((prev) => ({
       ...prev,
+      [activeConvId]: [...(prev[activeConvId] || []), newMsg],
+    }));
+    setInputText("");
+
+    // Try posting to real backend if active conversation is not a demo string
+    if (!activeConvId.startsWith("conv-")) {
+      try {
+        await api.messages.sendMessage(activeConvId, { body: textToSend });
+      } catch {
+        // optimistic state already added
+      }
+    }
+  };
+
+  const filteredConversations = conversations.filter(
+    (c) =>
+      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.subtitle.toLowerCase().includes(searchQuery.toLowerCase())
+  );
       [activeConvId]: [...(prev[activeConvId] || []), newMsg],
     }));
 

@@ -27,6 +27,7 @@ async def get_my_profile(
     return await service.get_or_create_profile(current_user)
 
 
+@router.post("", response_model=RoommateProfileRead)
 @router.put("/me", response_model=RoommateProfileRead)
 async def update_my_profile(
     update_data: RoommateProfileUpdate,
