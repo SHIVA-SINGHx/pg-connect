@@ -16,6 +16,7 @@ router = APIRouter()
 
 
 @router.get("", response_model=MatchResponse)
+@router.get("/roommates", response_model=MatchResponse)
 async def get_roommate_matches(
     current_user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],

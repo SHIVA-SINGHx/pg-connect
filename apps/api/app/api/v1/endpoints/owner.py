@@ -40,6 +40,7 @@ async def get_owner_listings(
 
 
 @router.get("/leads", response_model=list[InterestRead])
+@router.get("/inquiries", response_model=list[InterestRead])
 async def get_owner_leads(
     current_user: Annotated[User, Depends(require_role(UserRole.PG_OWNER, UserRole.ADMIN))],
     db: Annotated[AsyncSession, Depends(get_db)],

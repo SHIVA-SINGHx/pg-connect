@@ -2,8 +2,9 @@
 PGConnect API — In-app Notifications endpoints.
 """
 
+import uuid
 from typing import Annotated
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import get_current_user
@@ -38,7 +39,23 @@ async def get_unread_count(
     return {"unread_count": count}
 
 
+@router.patch("/{notification_id}/read")
+@router.post("/{notification_id}/read")
+async def mark_notification_read(
+    notification_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict[str, str]:
+    """Marks a single notification as read."""
+    service = NotificationService(db)
+    success = await service.mark_single_as_read(notification_id, current_user.id)
+    if not success:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found")
+    return {"message": "Notification marked as read", "status": "ok"}
+
+
 @router.post("/mark-all-read")
+@router.post("/read-all")
 async def mark_all_read(
     current_user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -46,4 +63,4 @@ async def mark_all_read(
     """Marks all user notifications as read."""
     service = NotificationService(db)
     await service.mark_all_as_read(current_user.id)
-    return {"status": "ok"}
+    return {"message": "All notifications marked as read", "status": "ok"}

@@ -128,3 +128,22 @@ async def list_reports(
     """Admin: view all user moderation reports."""
     stmt = select(Report).order_by(Report.created_at.desc())
     return list((await db.execute(stmt)).scalars().all())
+
+
+@router.post("/reports/{report_id}/resolve", response_model=ReportRead)
+async def resolve_report(
+    report_id: uuid.UUID,
+    current_user: Annotated[User, Depends(require_role(UserRole.ADMIN))],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> Report:
+    """Admin: mark a moderation report as resolved."""
+    stmt = select(Report).where(Report.id == report_id)
+    report = (await db.execute(stmt)).scalar_one_or_none()
+    if not report:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found")
+
+    from sqlalchemy import func
+    report.resolved_at = func.now()
+    await db.commit()
+    await db.refresh(report)
+    return report

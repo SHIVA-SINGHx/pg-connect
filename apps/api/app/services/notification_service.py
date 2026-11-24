@@ -90,3 +90,13 @@ class NotificationService:
         )
         await self.db.execute(stmt)
         await self.db.commit()
+
+    async def mark_single_as_read(self, notification_id: uuid.UUID, user_id: uuid.UUID) -> bool:
+        stmt = (
+            update(Notification)
+            .where(Notification.id == notification_id, Notification.user_id == user_id)
+            .values(read_at=func.now())
+        )
+        res = await self.db.execute(stmt)
+        await self.db.commit()
+        return res.rowcount > 0
