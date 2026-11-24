@@ -23,7 +23,7 @@ class NotificationService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def create_notification(
+    async def create_notification( 
         self,
         user_id: uuid.UUID,
         type: NotificationType,
