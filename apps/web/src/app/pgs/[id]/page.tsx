@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
@@ -17,6 +17,7 @@ import {
   Heart,
   ChevronLeft,
 } from "lucide-react";
+import { api } from "@/lib/api";
 
 function PGDetailContent() {
   const routeParams = useParams();
@@ -41,6 +42,11 @@ function PGDetailContent() {
   const toggleSave = () => {
     const nextSaved = !saved;
     setSaved(nextSaved);
+
+    if (!id.startsWith("pg-")) {
+      api.pgs.save(id).catch(() => {});
+    }
+
     if (typeof window !== "undefined") {
       try {
         const stored = localStorage.getItem("pgconnect_saved_pgs");
@@ -285,7 +291,12 @@ function PGDetailContent() {
               <div className="flex flex-col gap-3">
                 <button
                   type="button"
-                  onClick={() => setVisitBooked(true)}
+                  onClick={() => {
+                    setVisitBooked(true);
+                    if (!id.startsWith("pg-")) {
+                      api.pgs.expressInterest(id, { message: `Visit booked for ${selectedSharing} sharing` }).catch(() => {});
+                    }
+                  }}
                   className="w-full py-3.5 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Calendar className="w-4 h-4" />

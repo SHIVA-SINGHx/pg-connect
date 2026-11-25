@@ -28,8 +28,8 @@ export interface UserUpdate {
   avatar_url?: string | null;
 }
 
-export type GenderPreference = "MALE_ONLY" | "FEMALE_ONLY" | "ANY";
-export type ListingStatus = "DRAFT" | "PENDING_APPROVAL" | "PUBLISHED" | "UNLISTED" | "REJECTED";
+export type GenderPreference = "MALE" | "FEMALE" | "ANY" | "MALE_ONLY" | "FEMALE_ONLY";
+export type ListingStatus = "DRAFT" | "PENDING" | "ACTIVE" | "REJECTED" | "SUSPENDED" | "ARCHIVED" | "PENDING_APPROVAL" | "PUBLISHED";
 export type AvailabilityStatus = "AVAILABLE" | "FULL" | "WAITLIST";
 export type MediaType = "IMAGE" | "VIDEO" | "FLOOR_PLAN";
 export type RoomSharingType = "SINGLE" | "TWIN" | "TRIPLE" | "FOUR_PLUS";
@@ -179,22 +179,15 @@ export interface RoommateProfileRead extends RoommateProfileBase {
   user?: UserRead | null;
 }
 
-export interface MatchScoreDetails {
-  budget: number;
-  location: number;
-  lifestyle: number;
-  move_in: number;
-}
-
 export interface MatchResult {
   candidate: RoommateProfileRead;
-  overall_score: number;
-  score_details: MatchScoreDetails;
-  matched_areas: string[];
+  score: number;
+  reasons: string[];
 }
 
 export interface MatchResponse {
-  matches: MatchResult[];
+  items: MatchResult[];
+  matches?: MatchResult[];
   total: number;
 }
 

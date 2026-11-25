@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { api } from "@/lib/api";
 import {
   ShieldCheck,
   CheckCircle2,
@@ -94,28 +95,104 @@ export default function AdminModerationPage() {
   const [reports, setReports] = useState<ModerationReport[]>(INITIAL_REPORTS);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
-  const approveListing = (id: string, name: string) => {
+  useEffect(() => {
+    let isMounted = true;
+    async function loadAdminData() {
+      try {
+        const [liveListings, liveReports] = await Promise.all([
+          api.admin.getPendingListings().catch(() => null),
+          api.admin.getReports().catch(() => null),
+        ]);
+        if (isMounted) {
+          if (liveListings && liveListings.length > 0) {
+            setPendingListings(
+              liveListings.map((l) => ({
+                id: l.id,
+                name: l.name,
+                owner_name: "PG Owner",
+                owner_email: "owner@pgconnect.local",
+                area: l.area,
+                address: l.address,
+                price_from: l.price_from,
+                submitted_at: new Date(l.created_at).toLocaleDateString([], {
+                  month: "short",
+                  day: "numeric",
+                }),
+                status: "PENDING",
+              }))
+            );
+          }
+          if (liveReports && liveReports.length > 0) {
+            setReports(
+              liveReports.map((r) => ({
+                id: r.id,
+                reporter: "Community Member",
+                target_type: r.reported_listing_id ? "LISTING" : "USER",
+                target_name: r.reported_listing_id ? "PG Property" : "User Account",
+                reason: r.reason,
+                details: r.details || "No details provided",
+                created_at: new Date(r.created_at).toLocaleDateString([], {
+                  month: "short",
+                  day: "numeric",
+                }),
+                resolved: Boolean(r.resolved_at),
+              }))
+            );
+          }
+        }
+      } catch {
+        // Fallback to demo moderation data
+      }
+    }
+    loadAdminData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const approveListing = async (id: string, name: string) => {
     setPendingListings((prev) =>
       prev.map((l) => (l.id === id ? { ...l, status: "APPROVED" } : l))
     );
     setActionMessage(`Approved "${name}". It is now published live to Gurgaon search.`);
     setTimeout(() => setActionMessage(null), 3500);
+    if (!id.startsWith("pend-")) {
+      try {
+        await api.admin.approveListing(id);
+      } catch {
+        // Optimistic update retained
+      }
+    }
   };
 
-  const rejectListing = (id: string, name: string) => {
+  const rejectListing = async (id: string, name: string) => {
     setPendingListings((prev) =>
       prev.map((l) => (l.id === id ? { ...l, status: "REJECTED" } : l))
     );
     setActionMessage(`Rejected "${name}". Feedback notification dispatched to property owner.`);
     setTimeout(() => setActionMessage(null), 3500);
+    if (!id.startsWith("pend-")) {
+      try {
+        await api.admin.rejectListing(id, "Rejected by administrative moderation team.");
+      } catch {
+        // Optimistic update retained
+      }
+    }
   };
 
-  const resolveReport = (id: string) => {
+  const resolveReport = async (id: string) => {
     setReports((prev) =>
       prev.map((r) => (r.id === id ? { ...r, resolved: true } : r))
     );
     setActionMessage("Report resolved successfully.");
     setTimeout(() => setActionMessage(null), 3000);
+    if (!id.startsWith("rep-")) {
+      try {
+        await api.admin.resolveReport(id);
+      } catch {
+        // Optimistic update retained
+      }
+    }
   };
 
   return (

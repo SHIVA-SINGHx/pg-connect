@@ -25,7 +25,7 @@ import type {
   SavedPGRead,
   UserRead,
   UserUpdate,
-} from "./types.js";
+} from "./types";
 
 export interface ClientConfig {
   baseUrl?: string;

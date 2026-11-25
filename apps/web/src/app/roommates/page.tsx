@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Users,
@@ -11,6 +11,7 @@ import {
   Heart,
   MessageSquare,
 } from "lucide-react";
+import { api } from "@/lib/api";
 
 interface RoommateCandidate {
   id: string;
@@ -117,6 +118,7 @@ const ROOMMATES: RoommateCandidate[] = [
 ];
 
 export default function RoommatesPage() {
+  const [roommates, setRoommates] = useState<RoommateCandidate[]>(ROOMMATES);
   const [selectedDiet, setSelectedDiet] = useState<string>("All");
   const [selectedGender, setSelectedGender] = useState<string>("All");
   const [selectedArea, setSelectedArea] = useState<string>("All");
@@ -137,8 +139,54 @@ export default function RoommatesPage() {
     return ["rm-1", "rm-2"];
   });
 
-  const toggleConnect = (id: string) => {
-    setConnectedIds((prev) => ({ ...prev, [id]: !prev[id] }));
+  useEffect(() => {
+    let isMounted = true;
+    async function loadMatches() {
+      try {
+        const res = await api.roommates.getMatches();
+        if (isMounted && res && res.items && res.items.length > 0) {
+          const mapped: RoommateCandidate[] = res.items.map((m: any, idx: number) => ({
+            id: m.candidate.id,
+            name: m.candidate.user?.name || "Roommate Seeker",
+            age: 24,
+            gender: "Male",
+            profession: m.candidate.occupation?.replace("_", " ") || "Professional",
+            company: m.candidate.company_or_college || "Gurgaon Hub",
+            targetArea: (m.candidate.preferred_areas && m.candidate.preferred_areas[0]) || "Cyber City",
+            budgetMin: m.candidate.budget_min || 8000,
+            budgetMax: m.candidate.budget_max || 18000,
+            moveInDate: m.candidate.move_in_date ? new Date(m.candidate.move_in_date).toLocaleDateString([], { month: "short", day: "numeric" }) : "Immediate",
+            matchScore: m.score,
+            matchReasons: m.reasons || ["Shared budget range", "Preferred Gurgaon locality"],
+            diet: m.candidate.food_preference?.replace("_", " ") || "Vegetarian",
+            sleepSchedule: m.candidate.sleep_schedule?.replace("_", " ") || "Flexible",
+            workMode: "Hybrid",
+            smoking: m.candidate.smoking_preference === "NO_SMOKING" ? "Non-Smoker" : "Occasional",
+            avatar: `https://images.unsplash.com/photo-${1534528741775 + idx}?auto=format&fit=crop&w=400&q=80`,
+            bio: m.candidate.bio || "Looking for a clean and friendly roommate in Gurgaon.",
+          }));
+          setRoommates(mapped);
+        }
+      } catch {
+        // Keep ROOMMATES demo list
+      }
+    }
+    loadMatches();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const toggleConnect = async (id: string) => {
+    const isNowConnected = !connectedIds[id];
+    setConnectedIds((prev) => ({ ...prev, [id]: isNowConnected }));
+    if (isNowConnected && !id.startsWith("rm-")) {
+      try {
+        await api.roommates.sendConnection({ receiver_id: id });
+      } catch {
+        // Optimistic state retained
+      }
+    }
   };
 
   const toggleSaveRoommate = (r: RoommateCandidate, e: React.MouseEvent) => {
@@ -179,7 +227,7 @@ export default function RoommatesPage() {
     }
   };
 
-  const filteredRoommates = ROOMMATES.filter((r) => {
+  const filteredRoommates = roommates.filter((r) => {
     if (selectedDiet !== "All" && r.diet !== selectedDiet) return false;
     if (selectedGender !== "All" && r.gender !== selectedGender) return false;
     if (selectedArea !== "All" && !r.targetArea.toLowerCase().includes(selectedArea.toLowerCase())) return false;

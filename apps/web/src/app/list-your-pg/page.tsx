@@ -12,6 +12,7 @@ import {
   ArrowLeft,
   Sparkles,
 } from "lucide-react";
+import { api } from "@/lib/api";
 
 export default function ListYourPGPage() {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
@@ -39,6 +40,25 @@ export default function ListYourPGPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
+
+    const single = parseInt(formData.singleRent) || 15000;
+    const twin = parseInt(formData.twinRent) || 10000;
+    const minPrice = Math.min(single, twin);
+
+    api.owner.createListing({
+      name: formData.name || "Gurgaon Executive PG",
+      area: formData.area,
+      address: formData.address || `${formData.area}, Gurgaon, Haryana`,
+      price_from: minPrice,
+      security_deposit: minPrice,
+      gender_preference: formData.gender === "Male" ? "MALE" : formData.gender === "Female" ? "FEMALE" : "ANY",
+      room_types: [
+        { sharing_type: "SINGLE", price_per_month: single, total_beds: 5, available_beds: 3 },
+        { sharing_type: "TWIN", price_per_month: twin, total_beds: 10, available_beds: 6 },
+      ],
+      media: [],
+      amenity_ids: [],
+    }).catch(() => {});
   };
 
   if (submitted) {

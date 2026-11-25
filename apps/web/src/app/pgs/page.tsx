@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Building2,
@@ -16,6 +16,7 @@ import {
   Check,
   Heart,
 } from "lucide-react";
+import { api } from "@/lib/api";
 
 interface PGItem {
   id: string;
@@ -120,6 +121,7 @@ const ALL_PGS: PGItem[] = [
 ];
 
 export default function PGsPage() {
+  const [pgsList, setPgsList] = useState<PGItem[]>(ALL_PGS);
   const [selectedArea, setSelectedArea] = useState<string>("All");
   const [selectedGender, setSelectedGender] = useState<string>("All");
   const [maxBudget, setMaxBudget] = useState<number>(20000);
@@ -140,12 +142,54 @@ export default function PGsPage() {
     return ["pg-cyber-hub-1", "pg-udyog-vihar-1"];
   });
 
+  useEffect(() => {
+    let isMounted = true;
+    async function loadPGs() {
+      try {
+        const res = await api.pgs.search({
+          area: selectedArea !== "All" ? selectedArea : undefined,
+          max_price: maxBudget,
+          page_size: 50,
+        });
+        if (isMounted && res && res.items && res.items.length > 0) {
+          const mapped: PGItem[] = res.items.map((p, idx) => ({
+            id: p.id,
+            name: p.name,
+            area: p.area,
+            price: p.price_from,
+            gender: (p.gender_preference === "MALE" ? "Male" : p.gender_preference === "FEMALE" ? "Female" : "Unisex") as "Male" | "Female" | "Unisex",
+            sharing: p.room_types && p.room_types.length > 0
+              ? p.room_types.map((rt) => rt.sharing_type.replace("_", " "))
+              : ["Single", "Twin"],
+            rating: 4.8,
+            reviewsCount: 20 + idx * 3,
+            verified: p.is_verified,
+            amenities: ["WiFi", "Power Backup", "Food Included", "AC"],
+            image: (p.media && p.media.length > 0 && p.media[0].storage_path) || ALL_PGS[idx % ALL_PGS.length].image,
+            distanceToMetro: "Near Rapid Metro Gurgaon",
+          }));
+          setPgsList(mapped);
+        }
+      } catch {
+        // Fallback to ALL_PGS
+      }
+    }
+    loadPGs();
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedArea, maxBudget]);
+
   const toggleSavePG = (pg: PGItem, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const isSaved = savedIds.includes(pg.id);
     const nextSavedIds = isSaved ? savedIds.filter((id) => id !== pg.id) : [...savedIds, pg.id];
     setSavedIds(nextSavedIds);
+
+    if (!pg.id.startsWith("pg-")) {
+      api.pgs.save(pg.id).catch(() => {});
+    }
 
     if (typeof window !== "undefined") {
       try {
@@ -176,7 +220,7 @@ export default function PGsPage() {
     }
   };
 
-  const filteredPGs = ALL_PGS.filter((pg) => {
+  const filteredPGs = pgsList.filter((pg) => {
     if (selectedArea !== "All" && !pg.area.toLowerCase().includes(selectedArea.toLowerCase())) {
       return false;
     }

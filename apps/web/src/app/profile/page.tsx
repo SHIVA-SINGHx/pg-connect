@@ -1,21 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   MapPin,
   ShieldCheck,
   Check,
 } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
+import { api } from "@/lib/api";
 
 export default function ProfilePage() {
+  const { user } = useAuth();
   const [isDiscoverable, setIsDiscoverable] = useState(true);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   // Profile data
   const [profile, setProfile] = useState({
-    name: "Vikram Malhotra",
-    email: "vikram.m@example.com",
-    phone: "+91 98765 43210",
+    name: user?.name || "Vikram Malhotra",
+    email: user?.email || "vikram.m@example.com",
+    phone: user?.phone || "+91 98765 43210",
     profession: "Senior Product Manager",
     company: "Google Gurgaon",
     targetArea: "Cyber City / Sector 22",
@@ -28,10 +31,50 @@ export default function ProfilePage() {
     bio: "Chill professional working in Cyber City. Looking for a neat and peaceful co-living room or flatmate.",
   });
 
-  const handleSave = (e: React.FormEvent) => {
+  useEffect(() => {
+    let isMounted = true;
+    async function loadProfile() {
+      try {
+        const p = await api.profiles.getMyProfile();
+        if (isMounted && p) {
+          setProfile((prev) => ({
+            ...prev,
+            profession: p.occupation || prev.profession,
+            company: p.company_or_college || prev.company,
+            budgetMin: String(p.budget_min || prev.budgetMin),
+            budgetMax: String(p.budget_max || prev.budgetMax),
+            diet: p.food_preference?.replace("_", " ") || prev.diet,
+            sleepSchedule: p.sleep_schedule?.replace("_", " ") || prev.sleepSchedule,
+            smoking: p.smoking_preference === "NO_SMOKING" ? "Non-smoker" : prev.smoking,
+            bio: p.bio || prev.bio,
+          }));
+          setIsDiscoverable(p.is_discoverable ?? true);
+        }
+      } catch {
+        // Fallback
+      }
+    }
+    loadProfile();
+    return () => { isMounted = false; };
+  }, []);
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 3000);
+
+    try {
+      await api.profiles.updateProfile({
+        bio: profile.bio,
+        occupation: profile.profession as any,
+        company_or_college: profile.company,
+        budget_min: parseInt(profile.budgetMin) || 12000,
+        budget_max: parseInt(profile.budgetMax) || 18000,
+        is_discoverable: isDiscoverable,
+      });
+    } catch {
+      // Local state saved
+    }
   };
 
   return (

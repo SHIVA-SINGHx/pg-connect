@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
+import { api } from "@/lib/api";
 import {
   Building2,
   Users,
@@ -108,7 +109,59 @@ const SAMPLE_LEADS: TenantLead[] = [
 export default function OwnerDashboardPage() {
   const { user } = useAuth();
   const [listings, setListings] = useState<OwnerListing[]>(SAMPLE_OWNER_LISTINGS);
+  const [leads, setLeads] = useState<TenantLead[]>(SAMPLE_LEADS);
   const [promotedId, setPromotedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadOwnerData() {
+      try {
+        const [liveListings, liveLeads] = await Promise.all([
+          api.owner.getListings().catch(() => null),
+          api.owner.getInquiries().catch(() => null),
+        ]);
+        if (isMounted) {
+          if (liveListings && liveListings.length > 0) {
+            setListings(
+              liveListings.map((l) => ({
+                id: l.id,
+                name: l.name,
+                area: l.area,
+                price_from: l.price_from,
+                available_beds: l.room_types?.reduce((acc, rt) => acc + (rt.available_beds || 0), 0) || 5,
+                total_beds: l.room_types?.reduce((acc, rt) => acc + (rt.total_beds || 0), 0) || 20,
+                status: l.status as "ACTIVE" | "PENDING" | "DRAFT",
+                is_promoted: false,
+                views: 320,
+              }))
+            );
+          }
+          if (liveLeads && liveLeads.length > 0) {
+            setLeads(
+              liveLeads.map((ld) => ({
+                id: ld.id,
+                tenant_name: "Interested Tenant",
+                phone: "+91 98112 44556",
+                pg_name: "Your PG Property",
+                sharing_interested: "Direct Inquiry",
+                date: new Date(ld.created_at).toLocaleDateString([], {
+                  month: "short",
+                  day: "numeric",
+                }),
+                status: "NEW",
+              }))
+            );
+          }
+        }
+      } catch {
+        // Fallback to sample data
+      }
+    }
+    loadOwnerData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const togglePromotion = (id: string) => {
     setListings((prev) =>
@@ -280,7 +333,7 @@ export default function OwnerDashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-subtle">
-                {SAMPLE_LEADS.map((lead) => (
+                {leads.map((lead) => (
                   <tr key={lead.id} className="hover:bg-surface-muted/50 transition-colors">
                     <td className="py-3.5 px-4 font-bold text-on-surface">{lead.tenant_name}</td>
                     <td className="py-3.5 px-4 text-on-surface-variant">{lead.pg_name}</td>
